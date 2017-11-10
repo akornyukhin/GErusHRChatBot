@@ -13,7 +13,8 @@ from sqlalchemy.orm import sessionmaker
 session = sessionmaker()
 session.configure(bind=engine)
 
-local_timezone = tzlocal.get_localzone()
+import pandas as pd
+
 bot = telebot.TeleBot("477403081:AAGkP0dT1k4i4BjHZCjegkqrt-wcVOQ-Lso")
 
 # ORM
@@ -38,6 +39,9 @@ class HRdata(Base):
 
 Base.metadata.create_all(engine)
 
+df = pd.read_sql('hrdata', engine, index_col = 'id')
+df['id'] = df.index.values
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, "Hello, I am GE HR Chat bot. To see help type /help")
@@ -59,11 +63,24 @@ def send_help(message):
 
 @bot.message_handler(commands=['ask'])
 def send_ask(message):
-    bot.send_message(message.chat.id, 'Chose what you want to know:')
+    bot.send_message(message.chat.id, 'Chose what you want to know: \n' + df.loc[df['node_id'] == 1,'body'])
+
+@bot.message_handler(regexp = '\d')
+def send_answer(message):
+    answer_id = int(message.text)
+    ref_node_id = df.get_value(answer_id,'ref_node_id')
+    
+    # 
+    # Необходимо сделать обертку для id в str
+    # 
+    result = df.loc[df['node_id'] == ref_node_id, ['id','body']].values
+    result = "\n".join([" ".join(row) for row in result])
+
+    bot.reply_to(message, result)
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    bot.reply_to(message, str(datetime.fromtimestamp(float(message.date), local_timezone).strftime("%d-%m-%Y %H:%M:%S")) + "    " + message.text)
+    bot.reply_to(message, str(message.date) + "    " + message.text)
     bot.send_message(428535905, message.text + "    "  + str(message.from_user.id))
     
     user_id = message.from_user.id
