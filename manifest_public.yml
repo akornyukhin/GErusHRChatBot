@@ -1,0 +1,5 @@
+---
+applications:
+- name: ge-hr-chat-bot
+  memory: 512M
+

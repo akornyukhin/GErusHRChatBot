@@ -1,0 +1,6 @@
+Flask
+pandas
+numpy
+xlrd
+pyTelegramBotAPI
+SQLAlchemy==1.1.13
