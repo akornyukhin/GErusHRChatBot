@@ -65,16 +65,13 @@ def send_welcome(message):
 def send_help(message):
     bot.reply_to(message, "I can answer most common HR questions. Type /ask to begin.")
 
-def buttons(list, end=False):
-    markup = types.ReplyKeyboardMarkup(selective=True)
-
-    if end == True:
-        markup.row(types.KeyboardButton('Ask another question'))
-    else: 
-        for item in list:
-            markup.row(types.KeyboardButton(item))
-
-    return markup
+    user_id = message.from_user.id
+    message = Message(id=message.message_id, text=message.text)
+    s = session()
+    s.add(message)
+    s.query(Message).all()
+    s.query(User).filter(User.id == user_id).update({User.number_of_msg: User.number_of_msg + 1}, synchronize_session = False)
+    s.commit()
 
 @bot.message_handler(commands=['ask'])
 @bot.message_handler(regexp = '^Ask another question$')
@@ -82,6 +79,14 @@ def send_ask(message):
     bot.send_message(message.chat.id, "Chose what you want to know: \n" + list_of_values,
     reply_markup = buttons(df.loc[df.node_id == 1].index.astype('str'))
     )
+
+    user_id = message.from_user.id
+    message = Message(id=message.message_id, text=message.text)
+    s = session()
+    s.add(message)
+    s.query(Message).all()
+    s.query(User).filter(User.id == user_id).update({User.number_of_msg: User.number_of_msg + 1}, synchronize_session = False)
+    s.commit()
 
 @bot.message_handler(regexp = '\d')
 def send_answer(message):
@@ -96,19 +101,36 @@ def send_answer(message):
     markup = buttons(df.loc[df['node_id'] == ref_node_id].index.astype('str'), end=flag)
     bot.reply_to(message, result, reply_markup=markup)
 
-# @bot.message_handler(func=lambda message: True)
-# def echo_all(message):
-#     bot.reply_to(message, str(message.date) + "    " + message.text)
-#     bot.send_message(428535905, message.text + "    "  + str(message.from_user.id))
+    user_id = message.from_user.id
+    message = Message(id=message.message_id, text=message.text)
     
-#     user_id = message.from_user.id
-#     message = Message(id=message.message_id, text=message.text)
-    
-#     s = session()
-#     s.add(message)
-#     s.query(Message).all()
-#     s.query(User).filter(User.id == user_id).update({User.number_of_msg: User.number_of_msg + 1}, synchronize_session = False)
-#     s.commit()
+    s = session()
+    s.add(message)
+    s.query(Message).all()
+    s.query(User).filter(User.id == user_id).update({User.number_of_msg: User.number_of_msg + 1}, synchronize_session = False)
+    s.commit()
 
+
+@bot.message_handler(func=lambda message: True)
+def echo_all(message): 
+    user_id = message.from_user.id
+    message = Message(id=message.message_id, text=message.text)
+    
+    bot.reply_to(message, 'To ask a question type /ask')
+
+    s = session()
+    s.add(message)
+    s.query(Message).all()
+    s.query(User).filter(User.id == user_id).update({User.number_of_msg: User.number_of_msg + 1}, synchronize_session = False)
+    s.commit()
+
+def buttons(list, end=False):
+    markup = types.ReplyKeyboardMarkup(selective=True)
+    if end == True:
+        markup.row(types.KeyboardButton('Ask another question'))
+    else: 
+        for item in list:
+            markup.row(types.KeyboardButton(item))
+    return markup
 
 bot.polling(none_stop=True)
