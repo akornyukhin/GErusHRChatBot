@@ -1,21 +1,17 @@
-import flask
-import telebot
-from telebot import types
 import os
 import json
-from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, func
-from sqlalchemy.orm import relationship, backref
+
+import flask
+import pandas as pd
+import telebot
+from telebot import types
+from sqlalchemy import Column, DateTime, String, Integer, ForeignKey, func, create_engine
+from sqlalchemy.orm import relationship, backref, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from sqlalchemy import create_engine
-
 engine = create_engine(os.getenv('CSTRING'))
-
-from sqlalchemy.orm import sessionmaker
 session = sessionmaker()
-session.configure(bind=engine)
 
-import pandas as pd
 
 # Getting data from DB
 df = pd.read_sql('hrdata', engine, index_col='id')
@@ -26,19 +22,13 @@ bot = telebot.TeleBot(os.getenv('TOKEN'))
 
 # Webhook
 API_TOKEN = os.getenv('TOKEN')
-
-WEBHOOK_HOST = json.loads(os.getenv('VCAP_APPLICATION'))['VCAP_APPLICATION']['application_uris']
-WEBHOOK_PORT = 8443  # 443, 80, 88 or 8443 (port need to be 'open')
+WEBHOOK_PORT = os.getenv("PORT")
 WEBHOOK_LISTEN = '0.0.0.0'
+WEBHOOK_HOST = json.loads(os.getenv('VCAP_APPLICATION'))['VCAP_APPLICATION']['application_uris']
 
-WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % (API_TOKEN)
 
-# Remove webhook, it fails sometimes the set if there is a previous webhook
-bot.remove_webhook()
-
-# Set webhook
-bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH)
+WEBHOOK_URL_BASE = "https://{}:{}".format(WEBHOOK_HOST, WEBHOOK_PORT)
+WEBHOOK_URL_PATH = "/{}}/".format(API_TOKEN)
 
 # Flask init
 app = flask.Flask(__name__)
@@ -166,9 +156,17 @@ def buttons(list, end=False):
             markup.row(types.KeyboardButton(item))
     return markup
 
-if __name__ == '__main__':
-	# Start flask server
-	app.run(host=WEBHOOK_LISTEN,
-        	port=WEBHOOK_PORT,
-	        debug=True)
-# bot.polling(none_stop=True)
+# Remove webhook, it fails sometimes the set if there is a previous webhook
+bot.remove_webhook()
+
+# Set webhook
+bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH)
+
+# Start flask server
+app.run(host=WEBHOOK_LISTEN,
+        port=WEBHOOK_PORT, 
+        # port=os.getenv('PORT'),
+        debug=os.getenv('FLASK_DEBUG'))
+
+# if __name__=='__main__':
+#     bot.polling(none_stop=True)

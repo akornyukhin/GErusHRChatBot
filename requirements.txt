@@ -1,6 +1,7 @@
 Flask
 pandas
+psycopg2
 numpy
 xlrd
-pyTelegramBotAPI
+pyTelegramBotAPI==3.2.1
 SQLAlchemy==1.1.13
