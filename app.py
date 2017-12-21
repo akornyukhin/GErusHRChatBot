@@ -21,7 +21,6 @@ THREADED = True
 bot = telebot.TeleBot(API_TOKEN, threaded=THREADED)
 app = Flask(__name__)
 
-
 # Getting data from DB
 df = pd.read_excel('./static/hrdata.xlsx', index_col=0)
 list_of_values = df.loc[df['node_id'] == 1, ['id','body']].to_csv(sep="\t", header=False)
@@ -36,7 +35,7 @@ def webhook():
 # Updates processing
 @app.route(WEBHOOK_URL_PATH, methods=['POST'])
 def getMessage():
-    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    bot.process_new_updates([telebot.types.Update.de_json(request.get_data().decode("utf-8"))])
     return "!", 200
 
 # Start command
