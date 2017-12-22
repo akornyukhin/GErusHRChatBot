@@ -3,5 +3,6 @@ pandas
 psycopg2
 numpy
 xlrd
+gunicorn
 pyTelegramBotAPI==3.2.1
 SQLAlchemy==1.1.13

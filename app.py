@@ -4,6 +4,7 @@ import logging
 import json
 import pandas as pd
 from flask import Flask, request
+from werkzeug.contrib.fixers import ProxyFix
 from telebot import types
 
 #Constrants
@@ -35,7 +36,9 @@ def webhook():
 # Updates processing
 @app.route(WEBHOOK_URL_PATH, methods=['POST'])
 def getMessage():
+    print('Got new update')
     bot.process_new_updates([telebot.types.Update.de_json(request.get_data().decode("utf-8"))])
+    print('New update procesed')
     return "!", 200
 
 # Start command
@@ -84,6 +87,7 @@ def buttons(list, end=False):
             markup.row(types.KeyboardButton(item))
     return markup
 
+app.wsgi_app = ProxyFix(app.wsgi_app)
 if __name__ == '__main__':
     app.run(host='0.0.0.0',
             port=int(os.getenv('PORT')))
